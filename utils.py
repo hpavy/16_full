@@ -1,4 +1,4 @@
-#### Les fonctions utiles ici
+# Les fonctions utiles ici
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -37,7 +37,8 @@ def charge_data(hyper_param, param_adim):
         & (df["Time"] > hyper_param["t_min"])
         & (df["Time"] < hyper_param["t_max"])
         & (df["Points:2"] == 0.0)
-        & (df["Points:0"]**2+df["Points:1"]**2>(0.025/2)**2)   # pour ne pas avoir dans le cylindre 
+        # pour ne pas avoir dans le cylindre
+        & (df["Points:0"]**2+df["Points:1"]**2 > (0.025/2)**2)
     ]
     # Uniquement la fin de la turbulence
 
@@ -49,7 +50,8 @@ def charge_data(hyper_param, param_adim):
     u_full, v_full, p_full = (
         np.array(df_modified["Velocity:0"])/param_adim['V'],
         np.array(df_modified["Velocity:1"])/param_adim['V'],
-        np.array(df_modified["Pressure"])/((param_adim['V']**2)*param_adim['rho']),
+        np.array(df_modified["Pressure"]) /
+        ((param_adim['V']**2)*param_adim['rho']),
     )
 
     x_norm_full = (x_full - x_full.mean()) / x_full.std()
@@ -59,61 +61,65 @@ def charge_data(hyper_param, param_adim):
     u_norm_full = (u_full - u_full.mean()) / u_full.std()
     v_norm_full = (v_full - v_full.mean()) / v_full.std()
 
-    X_full = np.array([x_norm_full, y_norm_full, t_norm_full], dtype=np.float32).T
-    U_full = np.array([u_norm_full, v_norm_full, p_norm_full], dtype=np.float32).T
+    X_full = np.array(
+        [x_norm_full, y_norm_full, t_norm_full], dtype=np.float32).T
+    U_full = np.array(
+        [u_norm_full, v_norm_full, p_norm_full], dtype=np.float32).T
 
     x_int = (x_norm_full.max()-x_norm_full.min())/hyper_param['nb_points_axes']
     y_int = (y_norm_full.max()-y_norm_full.min())/hyper_param['nb_points_axes']
     X_train = np.zeros((0, 3))
     U_train = np.zeros((0, 3))
     for time in np.unique(t_norm_full):
-       for x_num in range(hyper_param['nb_points_axes']):
-        for y_num in range(hyper_param['nb_points_axes']):
-            masque = (
-                (x_norm_full > x_norm_full.min()+x_int*x_num)
-                & (x_norm_full < x_norm_full.min()+(x_num+1)*x_int)
-                & (y_norm_full < y_norm_full.min()+(y_num+1)*y_int)
-                & (y_norm_full > y_norm_full.min()+(y_num)*y_int)
-                & (t_norm_full == time)
-            )
-            if len(x_norm_full[masque]) > 0:
-                print('ah')
-                indice = np.random.choice(np.arange(len(x_norm_full[masque])), size=1, replace=False)
-                new_x=np.array(
-                    [
-                        x_norm_full[masque][indice],
-                        y_norm_full[masque][indice],
-                        t_norm_full[masque][indice]
-                        
-                    ]
-                    ).reshape(-1,3)
-                new_y = np.array(
-                    [
-                        u_norm_full[masque][indice],
-                        v_norm_full[masque][indice],
-                        p_norm_full[masque][indice]
-                        
-                    ]
-                    ).reshape(-1,3)
-                X_train = np.concatenate((X_train, new_x))
-                U_train = np.concatenate((U_train, new_y))
-                
-    # les points du bord 
-    
+        for x_num in range(hyper_param['nb_points_axes']):
+            for y_num in range(hyper_param['nb_points_axes']):
+                masque = (
+                    (x_norm_full > x_norm_full.min()+x_int*x_num)
+                    & (x_norm_full < x_norm_full.min()+(x_num+1)*x_int)
+                    & (y_norm_full < y_norm_full.min()+(y_num+1)*y_int)
+                    & (y_norm_full > y_norm_full.min()+(y_num)*y_int)
+                    & (t_norm_full == time)
+                )
+                if len(x_norm_full[masque]) > 0:
+                    indice = np.random.choice(
+                        np.arange(len(x_norm_full[masque])), size=1, replace=False)
+                    new_x = np.array(
+                        [
+                            x_norm_full[masque][indice],
+                            y_norm_full[masque][indice],
+                            t_norm_full[masque][indice]
+
+                        ]
+                    ).reshape(-1, 3)
+                    new_y = np.array(
+                        [
+                            u_norm_full[masque][indice],
+                            v_norm_full[masque][indice],
+                            p_norm_full[masque][indice]
+
+                        ]
+                    ).reshape(-1, 3)
+                    X_train = np.concatenate((X_train, new_x))
+                    U_train = np.concatenate((U_train, new_y))
+
+    # les points du bord
+
     nb_border = 100
-    teta_int = np.linspace(0,2*np.pi, nb_border)
+    teta_int = np.linspace(0, 2*np.pi, nb_border)
     X_border = np.zeros((0, 3))
     for time in np.unique(t_norm_full):
         for teta in teta_int:
-            x_ = (((0.025*np.cos(teta))/param_adim['L'])-x_full.mean())/x_full.std()
-            y_ = (((0.025*np.sin(teta))/param_adim['L'])-y_full.mean())/y_full.std()
-            new_x=np.array(
-                    [
-                        x_,
-                        y_,
-                        time      
-                    ]
-                    ).reshape(-1,3)
+            x_ = ((((0.025/2)*np.cos(teta)) /
+                  param_adim['L'])-x_full.mean())/x_full.std()
+            y_ = ((((0.025/2)*np.sin(teta)) /
+                  param_adim['L'])-y_full.mean())/y_full.std()
+            new_x = np.array(
+                [
+                    x_,
+                    y_,
+                    time
+                ]
+            ).reshape(-1, 3)
             X_border = np.concatenate((X_border, new_x))
 
     mean_std = {

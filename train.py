@@ -53,8 +53,9 @@ def train(
         loss_batch_test = {"total": [], "data": [], "pde": []}
         for batch in range(len(X_pde) // batch_size):
             model.train()  # on dit qu'on va entrainer (on a le dropout)
-            ## loss du pde
-            X_pde_batch = X_pde[batch * batch_size : (batch + 1) * batch_size, :]
+            # loss du pde
+            X_pde_batch = X_pde[batch *
+                                batch_size: (batch + 1) * batch_size, :]
             pred_pde = model(X_pde_batch)
             pred_pde1, pred_pde2, pred_pde3 = pde(
                 pred_pde,
@@ -77,11 +78,12 @@ def train(
 
             # loss des points de data
             pred_data = model(X_train)
-            
+
             # loss du border
             pred_border = model(X_border)
-            loss_data = loss(U_train, pred_data) + torch.mean(pred_border[:,:2]**2) # (MSE)
-            
+            loss_data = 0.5*loss(U_train, pred_data) + \
+                0.5*torch.mean(pred_border[:, :2]**2)  # (MSE)
+
             loss_totale = poids[0] * loss_data + poids[1] * loss_pde
 
             # Backpropagation
@@ -152,7 +154,8 @@ def train(
         print(f"time: {time.time()-time_start:.0f}s", file=f)
 
         if (epoch + 1) % save_rate == 0:
-            dossier_midle = Path(folder_result + f"/epoch{len(train_loss['total'])}")
+            dossier_midle = Path(
+                folder_result + f"/epoch{len(train_loss['total'])}")
             dossier_midle.mkdir(parents=True, exist_ok=True)
             torch.save(
                 {
