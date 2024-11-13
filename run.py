@@ -1,4 +1,4 @@
-from deepxrte.geometry import Rectangle_without_cylinder
+from deepxrte.geometry import RectangleWithoutCylinder
 import torch
 from utils import read_csv, write_csv, charge_data, init_model
 from train import train
@@ -48,7 +48,7 @@ class RunSimulation():
             torch.float32).to(self.device)
 
         # le domaine de résolution
-        rectangle = Rectangle_without_cylinder(
+        rectangle = RectangleWithoutCylinder(
             x_max=X_full[:, 0].max(),
             y_max=X_full[:, 1].max(),
             t_min=X_full[:, 2].min(),
