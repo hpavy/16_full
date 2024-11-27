@@ -1,5 +1,5 @@
 {
-    "nb_epoch": 2000,
+    "nb_epoch": 1000,
     "save_rate": 50,
     "weight_data": 1,
     "weight_pde": 1,

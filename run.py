@@ -38,13 +38,15 @@ class RunSimulation():
         ###############################################
 
         # Data loading
-        X_train_np, U_train_np, X_full, U_full, X_border_np, mean_std = charge_data(
+        X_train_np, U_train_np, X_full, U_full, X_border_np, X_border_test_np, mean_std = charge_data(
             self.hyper_param, self.param_adim)
         X_train = torch.from_numpy(X_train_np).requires_grad_().to(
             torch.float32).to(self.device)
         U_train = torch.from_numpy(U_train_np).requires_grad_().to(
             torch.float32).to(self.device)
         X_border = torch.from_numpy(X_border_np).requires_grad_().to(
+            torch.float32).to(self.device)
+        X_border_test = torch.from_numpy(X_border_test_np).requires_grad_().to(
             torch.float32).to(self.device)
 
         # le domaine de résolution
@@ -117,7 +119,9 @@ class RunSimulation():
                 save_rate=self.hyper_param["save_rate"],
                 batch_size=self.hyper_param["batch_size"],
                 scheduler=scheduler,
-                X_border=X_border
+                X_border=X_border, 
+                X_border_test=X_border_test, 
+                mean_std=mean_std
             )
 
         # On save le model et les losses
